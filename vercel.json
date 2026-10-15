@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/proxy/**": {
+      "regions": ["hkg1"]
+    }
+  },
   "rewrites": [
     {
       "source": "/proxy/:path*",
