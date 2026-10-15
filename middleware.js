@@ -2,6 +2,11 @@ import { sha256 } from './js/sha256.js'; // 需新建或引入SHA-256实现
 
 // Vercel Middleware to inject environment variables
 export default async function middleware(request) {
+  // Guard against re-processing our own internal subrequest (prevents infinite loop)
+  if (request.headers.get('x-middleware-subrequest')) {
+    return;
+  }
+
   // Get the URL from the request
   const url = new URL(request.url);
   
@@ -11,8 +16,11 @@ export default async function middleware(request) {
     return; // Let the request pass through unchanged
   }
 
-  // Fetch the original response
-  const response = await fetch(request);
+  // Fetch the original response via a marked subrequest so this middleware does not re-run
+  const subRequest = new Request(request, {
+    headers: { ...Object.fromEntries(request.headers), 'x-middleware-subrequest': '1' },
+  });
+  const response = await fetch(subRequest);
   
   // Check if it's an HTML response
   const contentType = response.headers.get('content-type') || '';
