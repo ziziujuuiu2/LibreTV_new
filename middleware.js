@@ -1,11 +1,13 @@
 import { sha256 } from './js/sha256.js'; // 需新建或引入SHA-256实现
 
+
 // Vercel Middleware to inject environment variables
 export default async function middleware(request) {
   // Guard against re-processing our own internal subrequest (prevents infinite loop)
   if (request.headers.get('x-middleware-subrequest')) {
     return;
   }
+
 
   // Get the URL from the request
   const url = new URL(request.url);
@@ -15,6 +17,7 @@ export default async function middleware(request) {
   if (!isHtmlPage) {
     return; // Let the request pass through unchanged
   }
+
 
   // Fetch the original response via a marked subrequest so this middleware does not re-run
   const subRequest = new Request(request, {
@@ -27,6 +30,7 @@ export default async function middleware(request) {
   if (!contentType.includes('text/html')) {
     return response; // Return the original response if not HTML
   }
+
 
   // Get the HTML content
   const originalHtml = await response.text();
@@ -45,6 +49,7 @@ export default async function middleware(request) {
     `window.__ENV__.PASSWORD = "${passwordHash}"; // SHA-256 hash`
   );
 
+
   // 修复Response构造
   return new Response(modifiedHtml, {
     status: response.status,
@@ -53,6 +58,8 @@ export default async function middleware(request) {
   });
 }
 
+
 export const config = {
+  runtime: 'edge',
   matcher: ['/', '/((?!api|_next/static|_vercel|favicon.ico).*)'],
 };
